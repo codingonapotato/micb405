@@ -40,9 +40,3 @@ if __name__ == "__main__":
             
             # Write to output file
             go_map.write(f"{gene_id}\t{",".join(go_terms)}\n")
-            
-            
-            
-        
-        
-            
