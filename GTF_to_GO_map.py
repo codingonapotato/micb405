@@ -8,6 +8,11 @@ import re
 
 if __name__ == "__main__":
     path_to_gtf_file = input("Please supply the path to your genome annotation (.gtf) file: ")
+    try:
+        assert path_to_gtf_file[-4:] == ".gtf" # Assert file extension is .gtf
+    except Exception as e:
+        e.add_note("Please supply a valid path to a genome annotation (.gtf) file")
+        raise e
     # Open genome annotation file and destination file
     with open(path_to_gtf_file) as genome_annotation, open("./go_mapping.tsv", 'w') as go_map:
         # Set to remove duplicates
