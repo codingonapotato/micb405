@@ -214,60 +214,85 @@ meropenem_down_order_term <- meropenem_down_GO_filtered_arranged %>%
 
 # Generate ggplots
 gg_colistin_up <- colistin_up_GO_filtered_arranged %>% 
-  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  ggplot(aes(x= Term, y = GeneRatio, color = weight01)) +
   geom_col(width = 0.05) +
-  geom_point(size = 3) +
+  geom_point(aes(size = Significant)) + 
   coord_flip() +
-  scale_x_discrete(limits = colistin_up_order_term) + 
-  scale_colour_gradient(low = "red", high = "blue")
+  scale_x_discrete(limits = colistin_up_order_term) +
+  scale_color_gradient(low = "red", high = "blue") +
+  theme_light() +
+  labs(x = "GO Term Description", y = "Enrichment Ratio", color = "P-value", size = "Number of Significant Genes") + 
+  theme(panel.border = element_rect(color = "black"), panel.grid = element_line(colour = "grey96")) +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.25), expand = c(0, 0)) # changes the scale of the axes
 gg_imipenem_up <- imipenem_up_GO_filtered_arranged %>% 
-  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  ggplot(aes(x= Term, y = GeneRatio, color = weight01)) +
   geom_col(width = 0.05) +
-  geom_point(size = 3) +
+  geom_point(aes(size = Significant)) + 
   coord_flip() +
-  scale_x_discrete(limits = imipenem_up_order_term) + 
-  scale_colour_gradient(low = "red", high = "blue")
+  scale_x_discrete(limits = imipenem_up_order_term) +
+  scale_color_gradient(low = "red", high = "blue") +
+  theme_light() +
+  labs(x = "GO Term Description", y = "Enrichment Ratio", color = "P-value", size = "Number of Significant Genes") + 
+  theme(panel.border = element_rect(color = "black"), panel.grid = element_line(colour = "grey96")) +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.25), expand = c(0, 0)) # changes the scale of the axes
 gg_meropenem_up <- meropenem_up_GO_filtered_arranged %>% 
-  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  ggplot(aes(x= Term, y = GeneRatio, color = weight01)) +
   geom_col(width = 0.05) +
-  geom_point(size = 3) +
+  geom_point(aes(size = Significant)) + 
   coord_flip() +
-  scale_x_discrete(limits = meropenem_up_order_term) + 
-  scale_colour_gradient(low = "red", high = "blue")
+  scale_x_discrete(limits = meropenem_up_order_term) +
+  scale_color_gradient(low = "red", high = "blue") +
+  theme_light() +
+  labs(x = "GO Term Description", y = "Enrichment Ratio", color = "P-value", size = "Number of Significant Genes") + 
+  theme(panel.border = element_rect(color = "black"), panel.grid = element_line(colour = "grey96")) +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.25), expand = c(0, 0)) # changes the scale of the axes
 
 gg_colistin_down <- colistin_down_GO_filtered_arranged %>% 
-  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  ggplot(aes(x= Term, y = GeneRatio, color = weight01)) +
   geom_col(width = 0.05) +
-  geom_point(size = 3) +
+  geom_point(aes(size = Significant)) + 
   coord_flip() +
-  scale_x_discrete(limits = colistin_down_order_term) + 
-  scale_colour_gradient(low = "red", high = "blue")
+  scale_x_discrete(limits = colistin_down_order_term) +
+  scale_color_gradient(low = "red", high = "blue") +
+  theme_light() +
+  labs(x = "GO Term Description", y = "Enrichment Ratio", color = "P-value", size = "Number of Significant Genes") + 
+  theme(panel.border = element_rect(color = "black"), panel.grid = element_line(colour = "grey96")) +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.25), expand = c(0, 0)) # changes the scale of the axes
 gg_imipenem_down <- imipenem_down_GO_filtered_arranged %>% 
-  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  ggplot(aes(x= Term, y = GeneRatio, color = weight01)) +
   geom_col(width = 0.05) +
-  geom_point(size = 3) +
+  geom_point(aes(size = Significant)) + 
   coord_flip() +
-  scale_x_discrete(limits = imipenem_down_order_term) + 
-  scale_colour_gradient(low = "red", high = "blue")
+  scale_x_discrete(limits = imipenem_down_order_term) +
+  scale_color_gradient(low = "red", high = "blue") +
+  theme_light() +
+  labs(x = "GO Term Description", y = "Enrichment Ratio", color = "P-value", size = "Number of Significant Genes") + 
+  theme(panel.border = element_rect(color = "black"), panel.grid = element_line(colour = "grey96")) +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.25), expand = c(0, 0)) # changes the scale of the axes
 gg_meropenem_down <- meropenem_down_GO_filtered_arranged %>% 
-  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  ggplot(aes(x= Term, y = GeneRatio, color = weight01)) +
   geom_col(width = 0.05) +
-  geom_point(size = 3) +
+  geom_point(aes(size = Significant)) + 
   coord_flip() +
-  scale_x_discrete(limits = meropenem_down_order_term) + 
-  scale_colour_gradient(low = "red", high = "blue")
+  scale_x_discrete(limits = meropenem_down_order_term) +
+  scale_color_gradient(low = "red", high = "blue") +
+  theme_light() +
+  labs(x = "GO Term Description", y = "Enrichment Ratio", color = "P-value", size = "Number of Significant Genes") + 
+  theme(panel.border = element_rect(color = "black"), panel.grid = element_line(colour = "grey96")) +
+  scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.25), expand = c(0, 0)) # changes the scale of the axes
+
 
 #### Save visualizations to file ####
 ggsave(filename="figures/colistin_upregulated.png", plot = gg_colistin_up,
-       width = 7, height = 7)
+       width = 15, height = 7)
 ggsave(filename="figures/imipenem_upregulated.png", plot = gg_imipenem_up,
-       width = 7, height = 7)
+       width = 15, height = 7)
 ggsave(filename="figures/meropenem_upregulated.png", plot = gg_meropenem_up,
-       width = 7, height = 7)
+       width = 15, height = 7)
 
 ggsave(filename="figures/colistin_downregulated.png", plot = gg_colistin_down,
-       width = 7, height = 7)
+       width = 15, height = 7)
 ggsave(filename="figures/imipenem_downregulated.png", plot = gg_imipenem_down,
-       width = 7, height = 7)
+       width = 15, height = 7)
 ggsave(filename="figures/meropenem_downregulated.png", plot = gg_meropenem_down,
-       width = 7, height = 7)
+       width = 15, height = 7)
