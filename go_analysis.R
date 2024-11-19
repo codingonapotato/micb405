@@ -147,3 +147,127 @@ meropenem_down_GO <- GenTable(meropenem_down_GO_data,
                              orderBy = "meropenem_down_result",
                              ranksOf = "meropenem_down_result",
                              topNodes = 50)
+
+#### Filter out any non-significant data and calculate the gene ratio ####
+colistin_up_GO_filtered <- colistin_up_GO %>%
+  mutate(GeneRatio = Significant/Annotated, weight01 = as.numeric(weight01)) %>%
+  filter(weight01 <= 0.05) %>%
+  head(n = 20)
+imipenem_up_GO_filtered <- imipenem_up_GO %>%
+  mutate(GeneRatio = Significant/Annotated, weight01 = as.numeric(weight01)) %>%
+  filter(weight01 <= 0.05) %>%
+  head(n = 20)
+meropenem_up_GO_filtered <- meropenem_up_GO %>%
+  mutate(GeneRatio = Significant/Annotated, weight01 = as.numeric(weight01)) %>%
+  filter(weight01 <= 0.05) %>%
+  head(n = 20)
+
+colistin_down_GO_filtered <- colistin_down_GO %>%
+  mutate(GeneRatio = Significant/Annotated, weight01 = as.numeric(weight01)) %>%
+  filter(weight01 <= 0.05) %>%
+  head(n = 20)
+imipenem_down_GO_filtered <- imipenem_down_GO %>%
+  mutate(GeneRatio = Significant/Annotated, weight01 = as.numeric(weight01)) %>%
+  filter(weight01 <= 0.05) %>%
+  head(n = 20)
+meropenem_down_GO_filtered <- meropenem_down_GO %>%
+  mutate(GeneRatio = Significant/Annotated, weight01 = as.numeric(weight01)) %>%
+  filter(weight01 <= 0.05) %>%
+  head(n = 20)
+
+#### Generate visualizations ####
+# Arrange the data based on the enrichment ratio. 
+colistin_up_GO_filtered_arranged <- colistin_up_GO_filtered %>% 
+  arrange(GeneRatio) %>%
+  mutate(Term = factor(Term))
+imipenem_up_GO_filtered_arranged <- imipenem_up_GO_filtered %>% 
+  arrange(GeneRatio) %>%
+  mutate(Term = factor(Term))
+meropenem_up_GO_filtered_arranged <- meropenem_up_GO_filtered %>% 
+  arrange(GeneRatio) %>%
+  mutate(Term = factor(Term))
+
+colistin_down_GO_filtered_arranged <- colistin_down_GO_filtered %>% 
+  arrange(GeneRatio) %>%
+  mutate(Term = factor(Term))
+imipenem_down_GO_filtered_arranged <- imipenem_down_GO_filtered %>% 
+  arrange(GeneRatio) %>%
+  mutate(Term = factor(Term))
+meropenem_down_GO_filtered_arranged <- meropenem_down_GO_filtered %>% 
+  arrange(GeneRatio) %>%
+  mutate(Term = factor(Term))
+
+# Extract the order of the term column
+colistin_up_order_term <- colistin_up_GO_filtered_arranged %>% 
+  pull(Term) # pull() extracts a column as a vector
+imipenem_up_order_term <- imipenem_up_GO_filtered_arranged %>% 
+  pull(Term) 
+meropenem_up_order_term <- meropenem_up_GO_filtered_arranged %>% 
+  pull(Term)
+
+colistin_down_order_term <- colistin_down_GO_filtered_arranged %>% 
+  pull(Term)
+imipenem_down_order_term <- imipenem_down_GO_filtered_arranged %>% 
+  pull(Term) 
+meropenem_down_order_term <- meropenem_down_GO_filtered_arranged %>% 
+  pull(Term)
+
+# Generate ggplots
+gg_colistin_up <- colistin_up_GO_filtered_arranged %>% 
+  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  geom_col(width = 0.05) +
+  geom_point(size = 3) +
+  coord_flip() +
+  scale_x_discrete(limits = colistin_up_order_term) + 
+  scale_colour_gradient(low = "red", high = "blue")
+gg_imipenem_up <- imipenem_up_GO_filtered_arranged %>% 
+  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  geom_col(width = 0.05) +
+  geom_point(size = 3) +
+  coord_flip() +
+  scale_x_discrete(limits = imipenem_up_order_term) + 
+  scale_colour_gradient(low = "red", high = "blue")
+gg_meropenem_up <- meropenem_up_GO_filtered_arranged %>% 
+  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  geom_col(width = 0.05) +
+  geom_point(size = 3) +
+  coord_flip() +
+  scale_x_discrete(limits = meropenem_up_order_term) + 
+  scale_colour_gradient(low = "red", high = "blue")
+
+gg_colistin_down <- colistin_down_GO_filtered_arranged %>% 
+  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  geom_col(width = 0.05) +
+  geom_point(size = 3) +
+  coord_flip() +
+  scale_x_discrete(limits = colistin_down_order_term) + 
+  scale_colour_gradient(low = "red", high = "blue")
+gg_imipenem_down <- imipenem_down_GO_filtered_arranged %>% 
+  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  geom_col(width = 0.05) +
+  geom_point(size = 3) +
+  coord_flip() +
+  scale_x_discrete(limits = imipenem_down_order_term) + 
+  scale_colour_gradient(low = "red", high = "blue")
+gg_meropenem_down <- meropenem_down_GO_filtered_arranged %>% 
+  ggplot(aes(x= Term, y = GeneRatio, colour = weight01)) +
+  geom_col(width = 0.05) +
+  geom_point(size = 3) +
+  coord_flip() +
+  scale_x_discrete(limits = meropenem_down_order_term) + 
+  scale_colour_gradient(low = "red", high = "blue")
+
+#### Save visualizations to file ####
+ggsave(filename="figures/colistin_upregulated.png", plot = gg_colistin_up,
+       width = 7, height = 7)
+ggsave(filename="figures/imipenem_upregulated.png", plot = gg_imipenem_up,
+       width = 7, height = 7)
+ggsave(filename="figures/meropenem_upregulated.png", plot = gg_meropenem_up,
+       width = 7, height = 7)
+
+ggsave(filename="figures/colistin_downregulated.png", plot = gg_colistin_down,
+       width = 7, height = 7)
+ggsave(filename="figures/imipenem_downregulated.png", plot = gg_imipenem_down,
+       width = 7, height = 7)
+ggsave(filename="figures/meropenem_downregulated.png", plot = gg_meropenem_down,
+       width = 7, height = 7)
