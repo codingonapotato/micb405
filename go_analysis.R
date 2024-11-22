@@ -9,17 +9,53 @@ library(stringr)
 geneID2GO <- readMappings("go_mapping.tsv")
 geneUniverse <- names(geneID2GO)
 
-antibiotic1 = "ciprofloxacin"
-antibiotic2 = "moxifloxacin"
-antibiotic3 = "tobramycin"
+ensure_dir <- function(dir) {
+  if (!dir.exists(dir)) {
+    dir.create(dir, recursive = TRUE)
+    message(sprintf("Directory created: %s", dir))
+  } else {
+    message(sprintf("Directory exists: %s", dir))
+  }
+}
 
-exp = "vs_ctrl_30"
-time = "30m"
+# Define enums
+antibiotics <- list(
+  CIPROFLOXACIN = "ciprofloxacin",
+  MOXIFLOXACIN = "moxifloxacin",
+  TOBRAMYCIN = "tobramycin",
+  IMIPENEM = "imipenem",
+  MEROPENEM = "meropenem",
+  COLISTIN = "colistin",
+  CONTROL = "control"
+)
+
+experiments <- list(
+  VS_CTRL_30 = "vs_ctrl_30",
+  VS_CTRL_90 = "vs_ctrl_90",
+  VS_30_90 = "30_vs_90"
+)
+
+times <- list(
+  T30M = "30m",
+  T90M = "90m"
+)
+
+# Use enums in your code
+antibiotic1 <- antibiotics$CIPROFLOXACIN
+antibiotic2 <- antibiotics$MOXIFLOXACIN
+antibiotic3 <- antibiotics$TOBRAMYCIN
+
+exp <- experiments$VS_CTRL_90
+time <- times$T90M
 
 #### Load differential expression analysis data ####
-file1 = paste(paste(antibiotic1, exp, sep="_"), "csv", sep=".")
-file2 = paste(paste(antibiotic2, exp, sep="_"), "csv", sep=".")
-file3 = paste(paste(antibiotic3, exp, sep="_"), "csv", sep=".")
+csvDir = "csv"
+ensure_dir(csvDir)
+plotDir = "plots"
+ensure_dir(plotDir)
+file1 = paste(csvDir, paste(paste(antibiotic1, exp, sep="_"), "csv", sep="."), sep="/")
+file2 = paste(csvDir, paste(paste(antibiotic2, exp, sep="_"), "csv", sep="."), sep="/")
+file3 = paste(csvDir, paste(paste(antibiotic3, exp, sep="_"), "csv", sep="."), sep="/")
 colistin_vs_control_90 <- read_csv(file1)
 imipenem_vs_control_90 <- read_csv(file2)
 meropenem_vs_control_90 <- read_csv(file3)
@@ -305,13 +341,14 @@ gg_meropenem_down <- meropenem_down_GO_filtered_arranged %>%
   theme(panel.border = element_rect(color = "black"), panel.grid = element_line(colour = "grey96")) +
   scale_y_continuous(limits = c(0,1), breaks = seq(0, 1, 0.25), expand = c(0, 0)) # changes the scale of the axes
 
-outUp1 = paste(paste(upRes1, exp, sep="_"), "png", sep=".")
-outUp2 = paste(paste(upRes2, exp, sep="_"), "png", sep=".")
-outUp3 = paste(paste(upRes3, exp, sep="_"), "png", sep=".")
 
-outDown1 = paste(paste(downRes1, exp, sep="_"), "png", sep=".")
-outDown2 = paste(paste(downRes2, exp, sep="_"), "png", sep=".")
-outDown3 = paste(paste(downRes3, exp, sep="_"), "png", sep=".")
+outUp1 = paste(plotDir, paste(paste(upRes1, exp, sep="_"), "png", sep="."), sep="/")
+outUp2 = paste(plotDir, paste(paste(upRes2, exp, sep="_"), "png", sep="."), sep="/")
+outUp3 = paste(plotDir, paste(paste(upRes3, exp, sep="_"), "png", sep="."), sep="/")
+
+outDown1 = paste(plotDir, paste(paste(downRes1, exp, sep="_"), "png", sep="."), sep="/")
+outDown2 = paste(plotDir, paste(paste(downRes2, exp, sep="_"), "png", sep="."), sep="/")
+outDown3 = paste(plotDir, paste(paste(downRes3, exp, sep="_"), "png", sep="."), sep="/")
 
 #### Save visualizations to file ####
 ggsave(filename=outUp1, plot = gg_colistin_up,
