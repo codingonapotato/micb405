@@ -4,6 +4,7 @@ suppressPackageStartupMessages(library(pheatmap))
 suppressPackageStartupMessages(library(topGO))
 
 library(stringr) 
+library(GO.db)
 
 #### Load GO mapping file and create character vector with all gene IDs from the file ####
 geneID2GO <- readMappings("go_mapping.tsv")
@@ -40,10 +41,9 @@ times <- list(
   T90M = "90m"
 )
 
-# Use enums in your code
-antibiotic1 <- antibiotics$CIPROFLOXACIN
-antibiotic2 <- antibiotics$MOXIFLOXACIN
-antibiotic3 <- antibiotics$TOBRAMYCIN
+antibiotic1 <- antibiotics$TOBRAMYCIN
+antibiotic2 <- antibiotics$CIPROFLOXACIN
+antibiotic3 <- antibiotics$MOXIFLOXACIN
 
 exp <- experiments$VS_CTRL_90
 time <- times$T90M
@@ -364,3 +364,252 @@ ggsave(filename=outDown2, plot = gg_imipenem_down,
        width = 15, height = 7)
 ggsave(filename=outDown3, plot = gg_meropenem_down,
        width = 15, height = 7)
+
+
+
+### Shared Pathways ###
+
+# Read the GTF file
+gtf_file <- "GCF_013372085.1_ASM1337208v1_genomic.gtf"
+
+# Load the GTF file as a data frame
+gtf_data <- read.table(
+  gtf_file,
+  sep = "\t",
+  header = FALSE,
+  stringsAsFactors = FALSE,
+  quote = ""
+)
+
+# Add column names
+colnames(gtf_data) <- c(
+  "seqname", "source", "feature", "start", "end", "score", 
+  "strand", "frame", "attributes"
+)
+
+# Extract gene-protein mappings
+extract_attribute <- function(attr_string, key) {
+  pattern <- paste0(key, ' "([^"]+)"')
+  match <- regmatches(attr_string, regexec(pattern, attr_string))
+  sapply(match, function(x) ifelse(length(x) > 1, x[2], NA))
+}
+
+
+gtf_data$gene_id <- extract_attribute(gtf_data$attributes, "gene_id")
+gtf_data$product <- extract_attribute(gtf_data$attributes, "product")
+
+# Filter rows with both gene_id and product
+gene_protein_map <- unique(
+  gtf_data[!is.na(gtf_data$gene_id) & !is.na(gtf_data$product), c("gene_id", "product")]
+)
+
+
+pathway_results$Proteins <- sapply(
+  strsplit(pathway_results$Genes, ", "), # Split the gene list into individual genes
+  function(genes) {
+    proteins <- get_proteins_for_genes(genes, gene_protein_map)
+    paste(proteins, collapse = ", ") # Combine proteins into a single string
+  }
+)
+
+
+# Define a function to process pathways for a drug
+process_pathways <- function(go_filtered, go_data, upregulated_genes, gene_protein_map) {
+  # Get all enriched pathways (GO IDs)
+  enriched_pathways <- go_filtered$GO.ID
+  
+  # Initialize a data frame to store results
+  pathway_results <- data.frame(
+    GO_ID = character(),
+    Pathway_Name = character(),
+    Genes = character(),
+    Proteins = character(),
+    stringsAsFactors = FALSE
+  )
+  
+  # Loop through each pathway
+  for (pathway_id in enriched_pathways) {
+    # Get pathway name/description
+    pathway_name <- Term(GOTERM[[pathway_id]])
+    
+    # Get associated genes
+    genes <- intersect(
+      genesInTerm(go_data, pathway_id)[[1]],
+      upregulated_genes
+    )
+    
+    # Get associated proteins
+    proteins <- gene_protein_map$protein_id[gene_protein_map$gene_id %in% genes]
+    
+    # Combine results into the data frame
+    pathway_results <- rbind(
+      pathway_results,
+      data.frame(
+        GO_ID = pathway_id,
+        Pathway_Name = pathway_name,
+        Genes = paste(genes, collapse = ", "),
+        Proteins = paste(unique(proteins), collapse = ", "),
+        stringsAsFactors = FALSE
+      )
+    )
+  }
+  
+  return(pathway_results)
+}
+
+# Process two drugs
+pathway_results_drug1 <- process_pathways(
+  meropenem_up_GO_filtered, meropenem_up_GO_data, 
+  meropenem_upregulated_genes, gene_protein_map
+)
+
+pathway_results_drug2 <- process_pathways(
+  imipenem_up_GO_filtered, imipenem_up_GO_data, 
+  imipenem_upregulated_genes, gene_protein_map
+)
+
+# Compare results between two drugs
+compare_pathways <- function(results1, results2) {
+  # Merge on GO_ID to find common pathways
+  merged_results <- merge(results1, results2, by = "GO_ID", suffixes = c("_drug1", "_drug2"))
+  
+  # Find common genes for each pathway
+  merged_results$Common_Genes <- mapply(
+    function(genes1, genes2) {
+      common <- intersect(strsplit(genes1, ", ")[[1]], strsplit(genes2, ", ")[[1]])
+      paste(common, collapse = ", ")
+    },
+    merged_results$Genes_drug1,
+    merged_results$Genes_drug2
+  )
+  
+  # Filter out pathways with no common genes
+  merged_results <- merged_results[merged_results$Common_Genes != "", ]
+  
+  return(merged_results)
+}
+
+# Perform comparison
+common_pathways <- compare_pathways(pathway_results_drug1, pathway_results_drug2)
+
+
+
+
+# Function to process pathways and get shared genes
+process_shared_pathways <- function(go_filtered1, go_data1, upregulated_genes1,
+                                     go_filtered2, go_data2, upregulated_genes2) {
+  # Get all enriched pathways (GO IDs) for both drugs
+  pathways1 <- go_filtered1$GO.ID
+  pathways2 <- go_filtered2$GO.ID
+  
+  # Identify common pathways
+  common_pathways <- intersect(pathways1, pathways2)
+  
+  # Initialize a data frame to store results
+  shared_results <- data.frame(
+    GO_ID = character(),
+    Pathway_Name = character(),
+    Common_Genes = character(),
+    stringsAsFactors = FALSE
+  )
+  
+  # Process each common pathway
+  for (pathway_id in common_pathways) {
+    # Get pathway name
+    pathway_name <- Term(GOTERM[[pathway_id]])
+    
+    # Get associated genes for both drugs
+    genes1 <- intersect(genesInTerm(go_data1, pathway_id)[[1]], upregulated_genes1)
+    genes2 <- intersect(genesInTerm(go_data2, pathway_id)[[1]], upregulated_genes2)
+    
+    # Find common genes
+    common_genes <- intersect(genes1, genes2)
+    
+    # Add to results if common genes exist
+    if (length(common_genes) > 0) {
+      shared_results <- rbind(
+        shared_results,
+        data.frame(
+          GO_ID = pathway_id,
+          Pathway_Name = pathway_name,
+          Common_Genes = paste(common_genes, collapse = ", "),
+          stringsAsFactors = FALSE
+        )
+      )
+    }
+  }
+  
+  return(shared_results)
+}
+
+# Process and find shared pathways
+shared_pathway_results <- process_shared_pathways(
+  meropenem_down_GO_filtered, meropenem_down_GO_data, meropenem_downregulated_genes,
+  imipenem_down_GO_filtered, imipenem_down_GO_data, 
+  imipenem_downregulated_genes
+)
+
+# Define the function to map proteins to pathways
+map_proteins_to_pathways <- function(pathway_results, gene_protein_map) {
+  # Helper function to get unique proteins for a list of genes
+  get_proteins_for_genes <- function(genes, map) {
+    matched_proteins <- map$product[map$gene_id %in% genes]
+    unique(matched_proteins)
+  }
+  
+  # Map proteins for each pathway in the pathway_results data frame
+  pathway_results$Proteins <- sapply(
+    strsplit(pathway_results$Common_Genes, ", "), # Split the gene list into individual genes
+    function(genes) {
+      proteins <- get_proteins_for_genes(genes, gene_protein_map)
+      paste(proteins, collapse = ", ") # Combine proteins into a single string
+    }
+  )
+  
+  return(pathway_results)
+}
+
+# Apply the function to shared_pathway_results
+final_shared_results <- map_proteins_to_pathways(shared_pathway_results, gene_protein_map)
+
+# Identify overlapping pathways
+common_terms <- intersect(imipenem_up_GO_filtered_arranged$Term, meropenem_up_GO_filtered_arranged$Term)
+
+# Filter datasets for overlapping pathways
+filtered_data <- imipenem_up_GO_filtered_arranged %>% filter(Term %in% common_terms)
+
+
+filtered_data %>% 
+  ggplot(aes(y = Term, x = GeneRatio)) +  # Swap x and y axes
+  geom_col(aes(fill = weight01), width = 0.1) + # Thin bars
+  geom_point(aes(size = Significant), color = "black") + # Overlay points
+  geom_text(aes(label = Term, x = 0), # Move labels to the left of bars
+            hjust = -0.03, vjust = 1.5, size = 5.5, angle = 0) +  # Adjust text angle for horizontal bars
+  scale_y_discrete(limits = common_terms) + # Use fixed common_terms
+  scale_fill_gradient(low = "red", high = "blue", name = "P-value") + # Gradient fill
+  scale_size_continuous(range = c(3, 8), name = "Number of Significant\n         Genes") + # Adjust point size
+  theme_light() +
+  labs(x = "Enrichment Ratio", # X-axis now shows Enrichment Ratio
+       y = "GO Term Description") +  # Y-axis now shows GO Term
+  theme(
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5, size = 20),
+    axis.title = element_text(size = 16, face = "bold"),
+    axis.text.y = element_blank(),  # Adjust y-axis text for better visibility
+    axis.text.x = element_text(size = 12),  # Adjust x-axis text for better visibility
+    axis.ticks.x = element_blank(),  # Remove x-axis ticks
+    panel.border = element_rect(color = "black"), 
+    panel.grid.major.x = element_blank(), # Remove vertical grid lines
+    plot.margin = margin(2, 2, 2, 2), # Adjust margins
+    aspect.ratio = 1/2 # Maintain aspect ratio
+  ) +
+  scale_x_continuous(
+    limits = c(0, 1),  # Keep the x-axis limit consistent
+    breaks = seq(0, 1, 0.25), 
+    expand = c(0, 0)
+  ) # Consistent x-axis scaling
+
+#Save go gene data
+write.table(imipenem_up_genes, file=paste(paste(antibiotic2, "GOupGenes", sep="_"), "tsv", sep="."), quote=FALSE, sep='\t', col.names = NA)
+write.table(meropenem_up_genes, file=paste(paste(antibiotic3, "GOupGenes", sep="_"), "tsv", sep="."), quote=FALSE, sep='\t', col.names = NA)
